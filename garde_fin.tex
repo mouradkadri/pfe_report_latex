@@ -1,16 +1,18 @@
 \thispagestyle{empty}
 
+% Si vous avez le PDF de garde officiel ESPRIT, placez-le ici
+% (figures/Garde-P3.pdf) et decommentez la ligne suivante :
+% \AddToShipoutPictureBG*{\put(0,0){\includegraphics[width=\paperwidth,height=\paperheight]{figures/Garde-P3.pdf}}}
+
 \AddToShipoutPictureBG*{%
-  \put(0,0){%
-    \includegraphics[width=\paperwidth,height=\paperheight]{Garde-P3.pdf}%
-  }
-  \put(250,680){\makebox[0pt][l]{\Huge\textbf{\color{red}2024-2025}}}
-  \put(300,499){\makebox[0pt][l]{\Huge\textbf{Specialty here..}}}
-  \put(190,459){\makebox[0pt][l]{\Huge\textbf{Title here..}}} 
-  \put(220,400){\makebox[0pt][l]{\large\textbf{By: }{(full name)}}} 
-  \put(220,350){\makebox[0pt][l]{\large\textbf{Academic supervisor: }{(full name)}}} 
-  \put(220,300){\makebox[0pt][l]{\large\textbf{Corporate Internship Supervisor: }{(full name)}}} 
-  \put(310,100){\makebox[0pt][l]{\includegraphics[height=5cm]{logo.png}}} 
+  \put(250,680){\makebox[0pt][l]{\Huge\textbf{\color{espritRed}2024-2025}}}
+  \put(120,580){\makebox[0pt][l]{\Large\textbf{Specialite : Genie Logiciel / Informatique}}}
+  \put(60,480){\parbox{14cm}{\Huge\textbf{Agent Vocal Intelligent pour le\\Recouvrement de Creances}}}
+  \put(60,420){\makebox[0pt][l]{\large\textit{Architecture Multi-Services Auto-Hebergee avec Portail de Gouvernance IA}}}
+  \put(220,300){\makebox[0pt][l]{\large\textbf{By: }{Prenom NOM}}}
+  \put(220,250){\makebox[0pt][l]{\large\textbf{Academic supervisor: }{Prenom NOM}}}
+  \put(220,200){\makebox[0pt][l]{\large\textbf{Corporate Internship Supervisor: }{Prenom NOM}}}
+  % \put(310,100){\makebox[0pt][l]{\includegraphics[height=2.5cm]{figures/logo_banque.png}}}
 }
 
-\mbox{} % Empty content to force the page creation
+\mbox{} % force la creation de la page

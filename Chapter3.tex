@@ -1,42 +1,318 @@
-\chapter*{chapitre 3}
-\markboth{Chapitre 3 }{3 Modélisation} %pour afficher l'entete
- \addcontentsline{toc}{chapter}{3 Modélisation}
+\chapter{Conception Globale du Syst\`eme}
+\minitoc
 
-\textbf{\Huge Modélisation} 
 
-\setcounter{chapter}{3}
-\setcounter{section}{0}
-
+%--------------------------------------------------------------
 \section{Introduction}
+%--------------------------------------------------------------
 
+\todo{Objectif du chapitre : vision complète du système avant les détails
+d'implémentation.}
 
+%--------------------------------------------------------------
+\section{Architecture générale du système}
+\label{sec:archi_globale}
+%--------------------------------------------------------------
 
-\section{Diagramme de classes}
+\todo{%
+  Figure PLEINE PAGE obligatoire : tous les services (boîtes),
+  tous les protocoles (WebSocket, REST, ESL, SIP/RTP),
+  les ports, une légende, une frontière "données internes / données externes".
+}
 
-\begin{figure}[h!]
- \centering
-    \includegraphics[width=13.5cm]{esm.png}
-    \caption{Diagramme de classe général}
-    \label{011}
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig3_architecture_globale}
+  \caption{Architecture globale du système}
+  \label{fig:architecture_globale}
 \end{figure}
 
-\section{Diagramme de séquences du système}
-\subsection{Diagramme de séquence du client :}
-\begin{figure}[h!]
- \centering
-    \includegraphics[width=15.5cm,height=21cm]{esm.png}
-    \caption{Diagramme de séquence du client}
-    \label{imag1}
+% Tableau de référence des services
+\begin{longtable}{lllll}
+  \caption{Tableau des services du système} \label{tab:services} \\
+  \toprule
+  \textbf{Service} & \textbf{Technologie} & \textbf{Port} & \textbf{Rôle} & \textbf{Communication} \\
+  \midrule
+  \endfirsthead
+  \multicolumn{5}{c}{\textit{(Suite du Tableau~\ref{tab:services})}} \\
+  \toprule
+  \textbf{Service} & \textbf{Technologie} & \textbf{Port} & \textbf{Rôle} & \textbf{Communication} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+  FreeSWITCH   & FreeSWITCH 1.10.11 & SIP:5060 / ESL:8022 & Serveur SIP/RTP   & WS $\rightarrow$ Voice GW \\
+  Voice Gateway & FastAPI            & 8000                & STT, TTS, VAD     & WS $\leftarrow$ FS, REST $\rightarrow$ Rasa \\
+  Rasa NLU/Core & Rasa 3.6.x        & 5005                & NLU, dialogue     & REST webhook \\
+  Action Server & FastAPI custom     & 5055                & Actions, LLM, RAG & Appelé par Rasa \\
+  KB Service   & FastAPI            & 8001                & ChromaDB, RAG     & REST \\
+  Ollama       & Ollama             & 11434               & Embeddings bge-m3 & REST \\
+  EspoCRM      & PHP/Apache         & 80                  & CRM débiteurs     & REST \\
+  Duckling     & Duckling           & 8080                & Entités temporelles & REST \\
+  Django Backend & Django + Gunicorn & 8080 (ext.)        & API gouvernance   & REST $\leftarrow$ Next.js \\
+  Celery Worker & Celery 5.4        & —                   & Tâches async      & Redis broker \\
+  Redis        & Redis              & 6379                & Broker, cache     & — \\
+  PostgreSQL   & PostgreSQL         & 5432                & DB Django         & — \\
+  Next.js Frontend & Next.js        & 3000                & Portail           & REST $\rightarrow$ Django \\
+\end{longtable}
+
+%--------------------------------------------------------------
+\section{Flux de données principal : un appel de recouvrement de bout en bout}
+%--------------------------------------------------------------
+
+\subsection{Narration du scénario nominal}
+
+\todo{%
+  Raconter le parcours d'un appel étape par étape :
+  1. Déclenchement Celery/ESL
+  2. FreeSWITCH compose le numéro
+  3. mod\_audio\_stream $\rightarrow$ Voice Gateway
+  4. VAD détecte l'activité vocale
+  5. STT transcrit l'utterance
+  6. POST texte $\rightarrow$ Rasa
+  7. NLU classifie l'intent
+  8. Action Server : EspoCRM / ChromaDB / Cerebras / DistilBERT (async)
+  9. Réponse $\rightarrow$ Piper TTS $\rightarrow$ resampling $\rightarrow$ ESL uuid\_broadcast
+}
+
+\subsection{Diagramme de séquence — scénario nominal}
+
+% ---- DIAGRAMME DE SÉQUENCE PRINCIPAL (pgf-umlsd) ----
+\begin{figure}[H]
+  \centering
+  \begin{sequencediagram}
+    \newthread{caller}{Débiteur}
+    \newinst[1]{fs}{FreeSWITCH}
+    \newinst[1]{vg}{Voice Gateway}
+    \newinst[1]{rasa}{Rasa}
+    \newinst[1]{action}{Action Server}
+    \newinst[1]{crm}{EspoCRM}
+    \newinst[1]{tts}{Piper TTS}
+
+    \begin{call}{caller}{Appel SIP entrant}{fs}{Connexion établie}
+    \end{call}
+
+    \begin{call}{fs}{Audio PCM 8kHz (WebSocket)}{vg}{}
+      \begin{call}{vg}{VAD $\rightarrow$ STT}{vg}{Texte transcrit}
+      \end{call}
+      \begin{call}{vg}{POST /webhooks/rest/webhook}{rasa}{Réponse texte}
+        \begin{call}{rasa}{Exécuter action}{action}{Résultat}
+          \begin{call}{action}{GET /api/v1/Contact}{crm}{Données débiteur}
+          \end{call}
+        \end{call}
+      \end{call}
+      \begin{call}{vg}{Synthèse audio}{tts}{PCM 22050Hz}
+      \end{call}
+    \end{call}
+
+    \begin{call}{fs}{ESL uuid\_broadcast}{caller}{Audio joué}
+    \end{call}
+
+  \end{sequencediagram}
+  \caption{Diagramme de séquence — Scénario nominal d'un appel de recouvrement}
+  \label{fig:seq_nominal}
 \end{figure}
 
-\subsection{Diagramme de séquence de l'admin :}
-\begin{figure}[h!]
- \centering
-    \includegraphics[width=15.5cm,height=21cm]{esm.png}
-    \caption{Diagramme de séquence de l'admin}
-    \label{imag1}
+\subsection{Diagramme de séquence — escalade vers agent humain}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig3_seq_escalade}
+  \caption{Diagramme de séquence — Escalade vers agent humain}
+  \label{fig:seq_escalade}
 \end{figure}
 
-\newpage
+%--------------------------------------------------------------
+\section{Acteurs et cas d'utilisation}
+%--------------------------------------------------------------
+
+\subsection{Acteurs identifiés}
+
+\todo{Débiteur, Superviseur bancaire, Administrateur système, Agent vocal IA.}
+
+\subsection{Diagramme de cas d'utilisation global}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig3_usecase}
+  \caption{Diagramme de cas d'utilisation global}
+  \label{fig:usecase}
+\end{figure}
+
+\subsection{Description des cas d'utilisation principaux}
+
+\begin{longtable}{lllp{5cm}}
+  \caption{Description des cas d'utilisation principaux} \label{tab:usecase} \\
+  \toprule
+  \textbf{UC} & \textbf{Acteur} & \textbf{Description} & \textbf{Préconditions} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{UC} & \textbf{Acteur} & \textbf{Description} & \textbf{Préconditions} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+  UC01 & Débiteur       & Recevoir un appel de recouvrement       & Dossier actif dans EspoCRM \\
+  UC02 & Débiteur       & S'authentifier (code postal / DDN)      & Appel en cours \\
+  UC03 & Débiteur       & Négocier un échéancier de paiement      & Authentifié \\
+  UC04 & Débiteur       & Être transféré à un agent humain        & Détresse émotionnelle \\
+  UC05 & Superviseur    & Consulter le monitoring des appels      & Connecté au portail \\
+  UC06 & Superviseur    & Consulter les analytics                 & Connecté au portail \\
+  UC07 & Administrateur & Gérer les guardrails IA                 & Rôle admin \\
+  UC08 & Administrateur & Lancer une campagne d'appels            & Rôle admin \\
+  UC09 & Administrateur & Entraîner le modèle Rasa (Forge)        & Rôle admin \\
+  UC10 & Administrateur & Exporter les logs réglementaires        & Rôle admin \\
+\end{longtable}
+
+%--------------------------------------------------------------
+\section{Modèle de domaine}
+%--------------------------------------------------------------
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig3_class_diagram}
+  \caption{Diagramme de classes — Modèle de domaine}
+  \label{fig:class_diagram}
+\end{figure}
+
+\todo{%
+  Classes : Contact/Debtor, Call, Utterance, EmotionLog,
+  Experiment, Run, Guardrail, KBDocument, Campaign, AuditLog.
+}
+
+%--------------------------------------------------------------
+\section{Diagramme de déploiement}
+%--------------------------------------------------------------
+
+\todo{%
+  Distinct de l'architecture globale (Section~\ref{sec:archi_globale}).
+  Montrer les nœuds physiques/virtuels : machine WSL2 (hôte Windows),
+  réseau Docker interne, réseau SIP, accès externe Cerebras.
+  Pour chaque nœud : artefacts déployés, gestionnaire de processus, protocole réseau.
+}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig3_deployment}
+  \caption{Diagramme de déploiement — Infrastructure physique et virtuelle}
+  \label{fig:deployment}
+\end{figure}
+
+%--------------------------------------------------------------
+\section{Maquettes IHM du portail de gouvernance}
+%--------------------------------------------------------------
+
+\todo{%
+  Présenter les maquettes (wireframes) des pages principales du portail
+  \textbf{avant} la réalisation (Ch.4). Ces maquettes définissent la cible
+  fonctionnelle et visuelle validée avec l'encadrant entreprise.
+  Outil recommandé : Figma, Balsamiq, ou croquis annoté scanné.
+  Un wireframe n'a pas besoin d'être pixel-perfect — l'essentiel est de montrer
+  la disposition des éléments et les interactions principales.
+}
+
+\subsection{Vue d'ensemble — navigation du portail}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig3_ihm_navigation}
+  \caption{Maquette IHM — Structure de navigation du portail}
+  \label{fig:ihm_navigation}
+\end{figure}
+
+\subsection{Page Agent Dashboard}
+
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=\textwidth]{figures/wireframe_dashboard.png}
+  \todo{Maquette : Agent Dashboard — KPIs, appels actifs, alertes émotion}
+  \caption{Maquette IHM — Agent Dashboard}
+  \label{fig:wireframe_dashboard}
+\end{figure}
+
+\subsection{Page Forge — Experiments}
+
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=\textwidth]{figures/wireframe_forge.png}
+  \todo{Maquette : Forge Experiments — tableau runs, métriques NLU, bouton Train}
+  \caption{Maquette IHM — Forge Experiments}
+  \label{fig:wireframe_forge}
+\end{figure}
+
+\subsection{Page Guardrails}
+
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=\textwidth]{figures/wireframe_guardrails.png}
+  \todo{Maquette : Guardrails — liste règles actives, modal création}
+  \caption{Maquette IHM — Guardrails}
+  \label{fig:wireframe_guardrails}
+\end{figure}
+
+%--------------------------------------------------------------
+\section{Sécurité et conformité}
+%--------------------------------------------------------------
+
+\subsection{Flux d'authentification 2FA $\rightarrow$ JWT}
+
+\begin{figure}[H]
+  \centering
+  \begin{sequencediagram}
+    \newthread{user}{Utilisateur}
+    \newinst[1]{nextjs}{Next.js}
+    \newinst[1]{django}{Django}
+    \newinst[1]{email}{Serveur SMTP}
+
+    \begin{call}{user}{email + mot de passe}{nextjs}{}
+      \begin{call}{nextjs}{POST /auth/login/}{django}{OTP généré}
+        \begin{call}{django}{Envoi OTP}{email}{}
+        \end{call}
+      \end{call}
+    \end{call}
+
+    \begin{call}{user}{Saisie OTP}{nextjs}{}
+      \begin{call}{nextjs}{POST /auth/verify-otp/}{django}{access\_token + refresh\_token}
+      \end{call}
+    \end{call}
+
+    \begin{call}{user}{Requête API}{nextjs}{}
+      \begin{call}{nextjs}{Bearer token}{django}{Réponse}
+      \end{call}
+    \end{call}
+
+  \end{sequencediagram}
+  \caption{Diagramme de séquence — Authentification 2FA $\rightarrow$ JWT}
+  \label{fig:seq_auth}
+\end{figure}
+
+\subsection{Cartographie de résidence des données}
+
+\begin{table}[H]
+  \centering
+  \caption{Cartographie des flux de données et résidence}
+  \label{tab:residence_donnees}
+  \begin{tabularx}{\textwidth}{lXll}
+    \toprule
+    \textbf{Flux} & \textbf{Données transmises} & \textbf{Périmètre} & \textbf{Justification} \\
+    \midrule
+    Voice GW $\rightarrow$ Rasa    & Texte transcrit          & Interne  & Réseau local \\
+    Action Server $\rightarrow$ EspoCRM & Données débiteur    & Interne  & Réseau local \\
+    Action Server $\rightarrow$ ChromaDB & Query texte        & Interne  & Process local \\
+    \rowcolor{yellow!20}
+    Action Server $\rightarrow$ \textbf{Cerebras} & Texte + contexte \ac{RAG} & \textbf{Externe} & Texte générique, \textbf{aucun PII} \\
+    Tous autres flux & Texte ou audio              & Interne  & Réseau local \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+%--------------------------------------------------------------
 \section{Conclusion}
-conclusion
+%--------------------------------------------------------------
+
+\todo{%
+  Synthèse de la conception. Transition : \og{}La conception globale
+  étant établie, le chapitre suivant détaille l'implémentation de chacun
+  des 7 modules du système.\fg{}
+}

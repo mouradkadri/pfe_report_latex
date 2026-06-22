@@ -1,3 +1,83 @@
-\chapter*{Conclusion Générale }
-\markboth{Conclusion Générale }{} %pour afficher l'entete
-\addcontentsline{toc}{chapter}{Conclusion Générale }
+\chapter*{Conclusion Générale}
+\addcontentsline{toc}{chapter}{Conclusion Générale}
+\markboth{Conclusion Générale}{Conclusion Générale}
+
+%--------------------------------------------------------------
+\section*{I. Bilan des contributions}
+%--------------------------------------------------------------
+
+\todo{%
+  Reprendre les 7 modules et résumer ce qui a été livré dans chacun
+  (2--3 lignes par module).
+}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig_conclusion_synthese}
+  \caption{Synthèse — Architecture finale avec métriques obtenues}
+  \label{fig:conclusion_synthese}
+\end{figure}
+
+\todo{%
+  Reprendre la figure d'architecture globale (Fig.~\ref{fig:architecture_globale})
+  et annoter chaque module avec ses métriques finales :
+  WER STT, F1 NLU, latence E2E, nombre d'intents, taille KB, etc.
+  C'est la figure que le jury photographiera pendant la soutenance.
+}
+
+%--------------------------------------------------------------
+\section*{II. Difficultés rencontrées et solutions apportées}
+%--------------------------------------------------------------
+
+\begin{table}[H]
+  \centering
+  \caption{Difficultés rencontrées et solutions apportées}
+  \label{tab:difficulties}
+  \begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Difficulté} & \textbf{Cause identifiée} & \textbf{Solution apportée} \\
+    \midrule
+    Binding RTP impossible sur IP Tailscale &
+      IP \texttt{100.85.89.14} non bindable dans WSL &
+      ESL\_HOST=127.0.0.1 \\
+    Artéfacts audio &
+      Resampling chunk par chunk &
+      Accumulation int16 complète \\
+    Double enregistrement CRM &
+      Slot call\_logged non initialisé &
+      Initialisation explicite à False \\
+    Noms tunisiens mal prononcés &
+      IPA espeak non fiable &
+      Dictionnaire orthographique français (226 entrées) \\
+    Race condition DuckDB &
+      Initialisation ChromaDB asynchrone &
+      Wrapper \_retry\_collection() avec back-off \\
+    Port ESL 8021 occupé &
+      svchost Windows &
+      Migration vers port 8022 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+%--------------------------------------------------------------
+\section*{III. Limites actuelles}
+%--------------------------------------------------------------
+
+\todo{%
+  Barge-in non implémenté, WER Darija dégradé, module émotionnel 3 classes,
+  scalabilité mono-serveur.
+}
+
+%--------------------------------------------------------------
+\section*{IV. Perspectives et travaux futurs}
+%--------------------------------------------------------------
+
+\todo{%
+  1. Barge-in (couche RTP stabilisée)
+  2. Fine-tuning STT corpus tunisien (LINAGORA arXiv 2504.02604)
+  3. TTS dialectal tunisien
+  4. Migration Celery complète pour le pipeline training
+  5. Déploiement VPS Ubuntu
+  6. Roadmap DevOps : k3s, GitLab CI, Prometheus/Grafana
+}
+

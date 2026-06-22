@@ -1,66 +1,290 @@
-\chapter*{chapitre 2}
-
-\markboth{Chapitre 2 }{ Analyse des besoins} %pour afficher l'entete
-\addcontentsline{toc}{chapter}{2  Analyse des besoins}
-\textbf{\Huge Analyse des besoins} 
-
-\setcounter{chapter}{2}
-\setcounter{section}{0}
+\chapter{\'Etat de l'Art et Choix Technologiques}
+\minitoc
 
 
+%--------------------------------------------------------------
 \section{Introduction}
+%--------------------------------------------------------------
 
-\section{Analyse des besoins}
+\todo{Annoncer la structure : 9+ couches technologiques examinées,
+chacune avec comparaison et décision justifiée.}
 
+%--------------------------------------------------------------
+\section{Agents conversationnels vocaux}
+%--------------------------------------------------------------
 
-\subsection{Besoins fonctionnels}
+\subsection{Taxonomie}
 
+\todo{IVR classique $\rightarrow$ voicebot rule-based $\rightarrow$ voicebot NLU
+$\rightarrow$ voicebot LLM-augmenté.
+Référence : Orange Innovation TALN 2022 (arXiv 2404.02009).}
 
-\subsection{Besoins non fonctionnels} 
-
-
-\section{Architecture}
-\subsection{Diagrammes des cas d'utilisation}
-
-\begin{flushleft}
-
-\begin{figure}[h!]
- \centering
-    \includegraphics[width=10cm]{esm.png}
-    \caption{esm taswira / diagramme }
-    \label{3}
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig2_taxonomie_voicebot}
+  \caption{Taxonomie des agents conversationnels vocaux}
+  \label{fig:taxonomie_voicebot}
 \end{figure}
 
-\end{flushleft}
+\subsection{Architecture canonique d'un voicebot}
 
+\todo{%
+  Présenter l'architecture générique STT $\rightarrow$ NLU $\rightarrow$
+  Dialogue Manager $\rightarrow$ TTS avant de détailler les choix technologiques.
+  Cette figure sert de référence pour toutes les comparaisons du chapitre.
+}
 
-\subsection{Tableaux des cas d'utilisation}
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig2_archi_canonique}
+  \caption{Architecture canonique d'un voicebot NLU}
+  \label{fig:archi_canonique}
+\end{figure}
 
+\todo{Voicebot NLU + LLM-augmenté, 100\% on-premise.}
 
-%---------client cas d'utilisation-------
-\begin{table}[!ht]
-\begin{center}
-     \begin{tabular}{|c{5cm}|c{8cm}|}
-     \hline
-   line1-case1         & line1-case2   \\
-    \hline
-line2-case1             & line2-case2          \\
- \hline
-line3-case1             & line3-case2          \\
- \hline
- line4-case1             & line4-case2          \\
- 
-    \hline
-     \end{tabular}
-     \caption{Caption..}
-     \label{1}
-     \end{center}
-     \end{table}
+%--------------------------------------------------------------
+\section{Couche téléphonique et traitement audio}
+%--------------------------------------------------------------
 
+\subsection{Protocoles SIP/RTP}
 
+\todo{Définition, rôle dans un système d'appels sortants.}
 
+\subsection{Comparaison des serveurs SIP}
 
+\begin{table}[H]
+  \centering
+  \caption{Comparaison des serveurs SIP}
+  \label{tab:comp_sip}
+  \begin{tabularx}{\textwidth}{lXXX}
+    \toprule
+    \textbf{Critère} & \textbf{FreeSWITCH} & \textbf{Asterisk} & \textbf{Twilio} \\
+    \midrule
+    Open-source         & \checkmark & \checkmark & $\times$ (SaaS) \\
+    Auto-hébergement    & \checkmark & \checkmark & $\times$ \\
+    mod\_audio\_stream  & \checkmark (natif) & $\times$ & N/A \\
+    Performance         & Haute & Moyenne & N/A \\
+    Conformité bancaire & \checkmark & \checkmark & $\times$ \\
+    \midrule
+    \rowcolor{lightGray}
+    \textbf{Retenu}     & \textbf{\checkmark} & & \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
+\todo{%
+  Paragraphe d'analyse (3-5 phrases) : Twilio elimine d'office par la contrainte
+  de residence des donnees. Entre FreeSWITCH et Asterisk, argumenter sur le
+  support natif de mod\_audio\_stream qui evite un dev custom de streaming
+  audio temps-reel -- c'est le critere decisif, pas juste "performance".
+}
 
+\subsection{Détection d'activité vocale (VAD)}
+
+\todo{%
+  Redaction en prose (PAS de tableau ici -- un seul critere de comparaison
+  ne justifie pas un tableau) : expliquer le role du VAD, puis comparer
+  Silero VAD V5 a WebRTC VAD en 1 paragraphe (precision, faux positifs,
+  integration Python). Conclure sur le choix de Silero VAD V5.
+}
+
+%--------------------------------------------------------------
+\section{Reconnaissance automatique de la parole (STT)}
+%--------------------------------------------------------------
+
+\subsection{Évolution des architectures}
+
+\todo{GMM-HMM $\rightarrow$ CNN-RNN $\rightarrow$ Transformer (Whisper).
+Défi linguistique tunisien (arXiv 2309.11327, arXiv 2504.02604).}
+
+\subsection{Comparaison des solutions STT}
+
+\begin{table}[H]
+  \centering
+  \caption{Comparaison des solutions \ac{STT}}
+  \label{tab:comp_stt}
+  \begin{tabularx}{\textwidth}{lXllX}
+    \toprule
+    \textbf{Solution} & \textbf{Type} & \textbf{WER FR} & \textbf{Tunisien} & \textbf{Conformité} \\
+    \midrule
+    Azure Speech       & Cloud & $\sim$5\% & partiel & $\times$ \\
+    Google STT         & Cloud & $\sim$6\% & non & $\times$ \\
+    OpenAI Whisper     & Local & $\sim$8\% & faible & \checkmark \\
+    faster-Whisper     & Local & $\sim$8\% & faible & \checkmark \\
+    \midrule
+    \rowcolor{lightGray}
+    \textbf{Retenu : faster-Whisper} & \textbf{Local} & & & \textbf{\checkmark} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\todo{%
+  Paragraphe d'analyse (3-5 phrases) : pourquoi faster-Whisper malgré un WER
+  legerement superieur a Azure/Google ? Argumenter sur la contrainte de
+  residence des donnees (BNF04), le cout d'inference local vs API payante,
+  et la possibilite de fine-tuning sur corpus tunisien (perspective Ch. futur).
+  Ne JAMAIS laisser un tableau sans interpretation ecrite qui en tire la conclusion.
+}
+
+%--------------------------------------------------------------
+\section{Compréhension du langage naturel (NLU) et gestion du dialogue}
+%--------------------------------------------------------------
+
+\subsection{Approches NLU}
+
+\todo{Rule-based $\rightarrow$ ML classique (SVM) $\rightarrow$ Transformers $\rightarrow$
+frameworks dédiés. Benchmark PFIA 2022.}
+
+\subsection{Comparaison Rasa vs alternatives}
+
+\begin{table}[H]
+  \centering
+  \caption{Comparaison des frameworks \ac{NLU}}
+  \label{tab:comp_nlu}
+  \begin{tabularx}{\textwidth}{lXXXX}
+    \toprule
+    \textbf{Critère} & \textbf{Rasa 3.6} & \textbf{Dialogflow CX} & \textbf{LUIS} & \textbf{Wit.ai} \\
+    \midrule
+    Open-source            & \checkmark & $\times$ & $\times$ & \checkmark \\
+    On-premise obligatoire & \checkmark & $\times$ & $\times$ & $\times$ \\
+    Flexibilité actions    & Très haute & Moyenne & Moyenne & Faible \\
+    Support FR             & \checkmark & \checkmark & \checkmark & \checkmark \\
+    Intégration Python     & \checkmark & Partielle & $\times$ & $\times$ \\
+    \midrule
+    \rowcolor{lightGray}
+    \textbf{Retenu}        & \textbf{\checkmark} & & & \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\todo{%
+  Paragraphe d'analyse : citer le benchmark PFIA 2022 (Schaeffer \& Bouvard) --
+  LUIS devance legerement Rasa en pure precision, mais l'argument decisif
+  reste l'obligation on-premise. Conclure que Rasa est le seul framework
+  NLU enterprise-grade 100\% deployable on-premise (deja mentionne en
+  encadre plus loin -- eviter la repetition mot pour mot).
+}
+
+\subsection{Génération augmentée par récupération (RAG)}
+
+\todo{%
+  Redaction en prose : definir le RAG et justifier pourquoi les politiques
+  bancaires ne peuvent pas etre hardcodees dans Rasa (volume, evolutivite,
+  precision des citations). Comparer en 1 paragraphe ChromaDB a Pinecone
+  (cloud, exclu) et Weaviate (plus lourd a deployer). Comparer egalement
+  les embeddings bge-m3 (multilingue, local via Ollama) a text-embedding-ada
+  (OpenAI, cloud, exclu). Un petit tableau 2 colonnes est acceptable ICI
+  seulement si le texte avant/apres reste substantiel -- sinon rester en prose.
+}
+
+%--------------------------------------------------------------
+\section{LLM et génération de réponses}
+%--------------------------------------------------------------
+
+\todo{Rôle précis (complément Rasa, pas remplacement).
+Cloud LLMs exclus. Ollama comparé à Cerebras.
+Retenu : Cerebras gpt-oss-120b — argument text-only, aucun PII.}
+
+%--------------------------------------------------------------
+\section{Synthèse vocale (TTS)}
+%--------------------------------------------------------------
+
+\begin{table}[H]
+  \centering
+  \caption{Comparaison des solutions \ac{TTS}}
+  \label{tab:comp_tts}
+  \begin{tabularx}{\textwidth}{lXlllX}
+    \toprule
+    \textbf{Solution} & \textbf{Type} & \textbf{Lat. CPU} & \textbf{Taille} & \textbf{Noms TN} & \textbf{Conf.} \\
+    \midrule
+    ElevenLabs              & Cloud & $\sim$800ms & N/A     & bonne & $\times$ \\
+    Coqui XTTS v2           & Local & $\sim$3-8s  & $\sim$2GB & bonne & \checkmark \\
+    Piper TTS               & Local & $\sim$50ms  & $\sim$200MB & mauvaise & \checkmark \\
+    \midrule
+    \rowcolor{lightGray}
+    \textbf{Piper + dict. phonémique} & \textbf{Local} & \textbf{$\sim$50ms} & \textbf{$\sim$200MB} & \textbf{\checkmark} & \textbf{\checkmark} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\todo{%
+  Paragraphe d'analyse : Piper seul a une mauvaise prononciation des noms
+  tunisiens -- expliquer ICI le probleme IPA via brackets espeak (non fiable),
+  puis la solution retenue : dictionnaire orthographique francais
+  (tunisian\_phonemes.json, 226 entrees). C'est ce qui transforme Piper
+  d'une solution "mauvaise sur les noms TN" a la solution retenue --
+  expliciter cette transformation, pas juste l'annoncer.
+}
+
+%--------------------------------------------------------------
+\section{CRM et gestion des interactions}
+%--------------------------------------------------------------
+
+\todo{%
+  Redaction en PROSE uniquement (pas de tableau -- 3 alternatives sur des
+  criteres simples ne justifient pas un tableau formel) : comparer EspoCRM,
+  SuiteCRM, Odoo en 1-2 paragraphes (legerete, API REST, auto-hebergement,
+  cout de licence). Conclure sur EspoCRM.
+}
+
+%--------------------------------------------------------------
+\section{Reconnaissance émotionnelle}
+%--------------------------------------------------------------
+
+\todo{%
+  Redaction en prose : justification metier (detecter detresse/agressivite
+  pour escalade humaine, standard call center). Comparer approches audio
+  (spectral) vs texte (NLP) -- texte retenu, justifier pourquoi (pas d'acces
+  audio post-ASR, CPU contraint). Comparer les 3 modeles candidats
+  (RoBERTa-large, XLM-R, DistilBERT multilingue) en 1 paragraphe avec
+  tailles memoire et latence CPU -- un petit tableau 3 lignes est acceptable
+  ici si le texte de justification reste developpe.
+}
+
+%--------------------------------------------------------------
+\section{Portail de gouvernance — stack web}
+%--------------------------------------------------------------
+
+\todo{Backend : Django vs FastAPI vs Spring Boot.
+Frontend : Vue vs React SPA vs Next.js.
+Auth : Session vs JWT + 2FA.}
+
+%--------------------------------------------------------------
+\section{Tableau récapitulatif des choix technologiques}
+%--------------------------------------------------------------
+
+\begin{table}[H]
+  \centering
+  \caption{Récapitulatif des choix technologiques}
+  \label{tab:recap_techno}
+  \begin{tabularx}{\textwidth}{lXlX}
+    \toprule
+    \textbf{Couche} & \textbf{Évalué} & \textbf{Retenu} & \textbf{Critère décisif} \\
+    \midrule
+    Serveur SIP    & FreeSWITCH, Asterisk, Twilio & FreeSWITCH 1.10.11 & On-premise + mod\_audio\_stream \\
+    VAD            & Silero V5, WebRTC VAD & Silero VAD V5 & Précision, Python natif \\
+    STT            & Azure, Google, Whisper & faster-Whisper & Local, French fine-tuned \\
+    NLU/Dialogue   & Rasa, Dialogflow, LUIS & Rasa 3.6.x & On-premise obligatoire \\
+    Vector DB      & Pinecone, Weaviate, ChromaDB & ChromaDB & Local, léger \\
+    Embeddings     & text-ada, bge-m3 & bge-m3 via Ollama & Multilingue, local \\
+    LLM            & GPT-4, Llama, Cerebras & Cerebras gpt-oss-120b & Perf + conformité \\
+    TTS            & ElevenLabs, Coqui, Piper & Piper + dict. phonémique & CPU, latence, local \\
+    CRM            & Odoo, SuiteCRM, EspoCRM & EspoCRM & API REST, légèreté \\
+    Émotion        & RoBERTa, XLM-R, DistilBERT & lxyuan/DistilBERT & CPU, multilingue, async \\
+    Backend portail & Spring Boot, FastAPI, Django & Django + Celery & ORM, Celery, 2FA \\
+    Frontend portail & Vue, React SPA, Next.js & Next.js & SSR, middleware auth \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+%--------------------------------------------------------------
 \section{Conclusion}
-conclusion
+%--------------------------------------------------------------
+
+\todo{%
+  Synthèse des choix justifiés par la contrainte de résidence des données.
+  Transition : \og{}Les choix technologiques étant justifiés, le chapitre
+  suivant présente la conception globale du système et l'articulation de
+  ses 7 modules.\fg{}
+}

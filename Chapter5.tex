@@ -1,0 +1,205 @@
+\chapter{Tests et \'Evaluation}
+\minitoc
+
+
+%--------------------------------------------------------------
+\section{Introduction}
+%--------------------------------------------------------------
+
+\todo{Objectif : prouver que le système fonctionne.
+Tests isolés par module ET test bout-en-bout.}
+
+%--------------------------------------------------------------
+\section{Stratégie de tests}
+%--------------------------------------------------------------
+
+\begin{table}[H]
+  \centering
+  \caption{Stratégie de tests}
+  \label{tab:test_strategy}
+  \begin{tabularx}{\textwidth}{lXXX}
+    \toprule
+    \textbf{Niveau} & \textbf{Type} & \textbf{Outils} & \textbf{Modules} \\
+    \midrule
+    Unitaire      & Tests fonctions Python       & pytest                & Action Server, KB Service \\
+    Intégration   & Tests endpoints API          & pytest + httpx        & Django API, Rasa webhook \\
+    Module NLU    & Évaluation NLU               & rasa test nlu         & Rasa \\
+    Module STT    & Mesure \ac{WER}               & jiwer                 & Voice Gateway \\
+    End-to-end    & Appel complet simulé         & Script de test        & Pipeline complet \\
+    Portail       & Checklist fonctionnelle      & Manuel (138 items)    & Django + Next.js \\
+    Sécurité      & Vérification flux auth       & Manuel + logs         & Django auth \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+%--------------------------------------------------------------
+\section{Évaluation STT}
+%--------------------------------------------------------------
+
+\begin{table}[H]
+  \centering
+  \caption{Résultats \ac{WER} selon la configuration}
+  \label{tab:wer_results}
+  \begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Configuration} & \textbf{WER global} & \textbf{WER noms propres} \\
+    \midrule
+    faster-Whisper base, sans dict.               & \todo{X\%} & \todo{X\%} \\
+    faster-Whisper French fine-tuned, sans dict.  & \todo{X\%} & \todo{X\%} \\
+    faster-Whisper French fine-tuned, + dict. phonémique & \textbf{\todo{X\%}} & \textbf{\todo{X\%}} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\todo{Analyse : impact du dictionnaire phonémique sur les noms tunisiens.}
+
+%--------------------------------------------------------------
+\section{Évaluation NLU (Rasa)}
+%--------------------------------------------------------------
+
+\begin{table}[H]
+  \centering
+  \caption{Évolution des métriques NLU entre runs}
+  \label{tab:nlu_metrics}
+  \begin{tabularx}{\textwidth}{lXXX}
+    \toprule
+    \textbf{Métrique} & \textbf{Run 1 (baseline)} & \textbf{Run N (final)} & \textbf{Delta} \\
+    \midrule
+    Accuracy          & \todo{X\%} & \todo{X\%} & \todo{+X\%} \\
+    Précision (moy.)  & \todo{X\%} & \todo{X\%} & \todo{+X\%} \\
+    Rappel (moy.)     & \todo{X\%} & \todo{X\%} & \todo{+X\%} \\
+    F1 (moy.)         & \todo{X\%} & \todo{X\%} & \todo{+X\%} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \todo{Matrice de confusion NLU}
+  \caption{Matrice de confusion — Classification des intents}
+  \label{fig:confusion_matrix}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \todo{%
+    Histogramme F1 par intent (sortie intent\_report.json).
+    Classer du plus faible au plus fort pour mettre en évidence
+    les intents problématiques.
+  }
+  \caption{F1-score par intent — Run final}
+  \label{fig:f1_per_intent}
+\end{figure}
+
+%--------------------------------------------------------------
+\section{Test end-to-end}
+%--------------------------------------------------------------
+
+\todo{%
+  Scénario : authentification $\rightarrow$ montant $\rightarrow$ négociation $\rightarrow$
+  accord $\rightarrow$ logging CRM vérifié.
+  Métriques : latence bout-en-bout, taux succès auth, taux correct intent.
+}
+
+\begin{table}[H]
+  \centering
+  \caption{Résultats test end-to-end}
+  \label{tab:e2e_results}
+  \begin{tabularx}{\textwidth}{lXl}
+    \toprule
+    \textbf{Métrique} & \textbf{Description} & \textbf{Résultat} \\
+    \midrule
+    Latence bout-en-bout  & Fin parole $\rightarrow$ début réponse TTS & \todo{X ms} \\
+    Taux auth réussi      & Authentification sur N tests               & \todo{X\%} \\
+    Taux intent correct   & Intent correct sur scénario complet        & \todo{X\%} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \todo{%
+    Graphique de latence bout-en-bout : bar chart ou box plot
+    montrant la distribution des temps de réponse (STT + NLU + Action + TTS)
+    sur N appels de test. Mettre en évidence la cible $<$ 2s.
+  }
+  \caption{Distribution des latences bout-en-bout sur le corpus de test}
+  \label{fig:latency_chart}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \todo{Capture : transcription appel test dans Live Monitoring}
+  \caption{Transcription d'un appel test dans le portail Live Monitoring}
+  \label{fig:e2e_transcript}
+\end{figure}
+
+%--------------------------------------------------------------
+\section{Tests du portail de gouvernance}
+%--------------------------------------------------------------
+
+\todo{%
+  Résumé checklist fonctionnelle (138 items).
+  4 démonstrations clés :
+  1. Forge : training $\rightarrow$ métriques
+  2. Guardrail : violation détectée $\rightarrow$ fallback
+  3. Live Monitoring : émotion visible
+  4. Export réglementaire
+}
+
+%--------------------------------------------------------------
+\section{Tests de sécurité}
+%--------------------------------------------------------------
+
+\todo{%
+  Vérification 2FA, JWT refresh auto, résidence données (Wireshark).
+}
+
+%--------------------------------------------------------------
+\section{Tableau récapitulatif des tests}
+%--------------------------------------------------------------
+
+\todo{%
+  Récapituler tous les tests effectués avec leur statut.
+  Ce tableau est lu en premier par le jury — il doit être complet et honnête.
+  Statut : \textbf{Réussi} / \textbf{Partiel} / \textbf{Non testé}.
+}
+
+\begin{longtable}{lp{6cm}lll}
+  \caption{Tableau récapitulatif des résultats de tests} \label{tab:test_summary} \\
+  \toprule
+  \textbf{ID} & \textbf{Cas de test} & \textbf{Module} & \textbf{Statut} & \textbf{Réf.} \\
+  \midrule
+  \endfirsthead
+  \multicolumn{5}{c}{\textit{(Suite du Tableau~\ref{tab:test_summary})}} \\
+  \toprule
+  \textbf{ID} & \textbf{Cas de test} & \textbf{Module} & \textbf{Statut} & \textbf{Réf.} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+  TC01 & Appel SIP sortant établi vers numéro test          & Téléphonie & \todo{} & §\ref{fig:m1_audio_flow} \\
+  TC02 & VAD détecte correctement début/fin de parole       & Voice GW   & \todo{} & — \\
+  TC03 & STT transcrit utterance française avec WER $<$ 15\%& STT        & \todo{} & Tab.~\ref{tab:wer_results} \\
+  TC04 & Noms propres tunisiens correctement transcrits      & STT + dict.& \todo{} & Tab.~\ref{tab:wer_results} \\
+  TC05 & NLU classifie intent correct (F1 $>$ 85\%)         & Rasa NLU   & \todo{} & Tab.~\ref{tab:nlu_metrics} \\
+  TC06 & Authentification par code postal réussie            & Rasa + CRM & \todo{} & — \\
+  TC07 & Authentification par date de naissance réussie      & Rasa + CRM & \todo{} & — \\
+  TC08 & Slot \texttt{call\_logged} évite doublon CRM        & Action Srv & \todo{} & — \\
+  TC09 & RAG retourne résultat pertinent sur question KB     & KB Service & \todo{} & — \\
+  TC10 & Emotion négative persistante déclenche escalade     & DistilBERT & \todo{} & — \\
+  TC11 & Latence E2E $<$ 2s sur scénario nominal             & Pipeline   & \todo{} & Fig.~\ref{fig:latency_chart} \\
+  TC12 & Scénario complet E2E : auth → négo → accord → log  & Pipeline   & \todo{} & §\ref{fig:e2e_transcript} \\
+  TC13 & Login 2FA : OTP expiré refusé                       & Auth       & \todo{} & — \\
+  TC14 & JWT expiré : refresh automatique sans interruption  & Auth       & \todo{} & — \\
+  TC15 & Guardrail bloque réponse LLM non conforme           & Guardrails & \todo{} & — \\
+  TC16 & Forge : lancement training → métriques affichées    & Portail    & \todo{} & — \\
+  TC17 & Export réglementaire généré sur période choisie     & Portail    & \todo{} & — \\
+  TC18 & Aucun PII transmis à Cerebras (capture réseau)      & Sécurité   & \todo{} & — \\
+\end{longtable}
+
+%--------------------------------------------------------------
+\section{Conclusion}
+%--------------------------------------------------------------
+
+\todo{Synthèse des résultats. Transition vers la conclusion générale.}

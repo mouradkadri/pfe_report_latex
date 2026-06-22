@@ -1,54 +1,423 @@
-\chapter*{chapitre 4}
-\markboth{Chapitre 4 }{4 Réalisation} %pour afficher l'entete
- \addcontentsline{toc}{chapter}{4 Réalisation}
+\chapter{R\'ealisation par Module}
+\minitoc
 
-\textbf{\Huge Réalisation} 
 
-\setcounter{chapter}{4}
-\setcounter{section}{0}
-
+%--------------------------------------------------------------
 \section{Introduction}
-intro
+%--------------------------------------------------------------
 
-\section{Environnement de travail}
+\todo{%
+  Rappeler les 7 modules et annoncer l'ordre de présentation
+  (ordre du flux de données).
+  Structure uniforme de chaque section :
+  Rôle $\rightarrow$ Architecture interne $\rightarrow$ Points techniques $\rightarrow$ Résultats.
+}
 
-\subsection{Environnement matériel }
-...
+%--------------------------------------------------------------
+\section{Module 1 — Couche Téléphonique et Voice Gateway}
+%--------------------------------------------------------------
 
+\subsection{Rôle}
 
-\subsection{Environnement logiciel}
-Dans notre projet, nous avons utilisé les logiciels suivants : 
-\subsubsection{Visual Studio Code :}
- 
- \subsubsection{Github :}
+\todo{Pont entre réseau SIP et pipeline IA.
+Gère l'audio entrant (PCM 8kHz) et sortant (TTS).}
 
+\subsection{Architecture interne}
 
-\subsubsection{Creately :}
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig4_m1_audio_flow}
+  \caption{Module 1 — Flux audio FreeSWITCH $\rightarrow$ WebSocket $\rightarrow$ VAD $\rightarrow$ STT}
+  \label{fig:m1_audio_flow}
+\end{figure}
 
-Creately est un outil de collaboration visuelle qui permet la création de diagrammes et de conception.\\
-L'application est principalement connue pour créer des chartes, des graphes, des diagrammes UML,...etc.\\
+\subsection{Points techniques clés}
 
+\begin{table}[H]
+  \centering
+  \caption{Module 1 — Problèmes rencontrés et solutions}
+  \label{tab:m1_issues}
+  \begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Problème} & \textbf{Cause} & \textbf{Solution} \\
+    \midrule
+    ESL sur port 8022 (non 8021) & Windows svchost occupait 8021 & Reconfiguration event\_socket.conf.xml \\
+    ESL\_HOST=127.0.0.1 obligatoire & WSL2 mirrored networking & Variable d'environnement corrigée \\
+    Saturation audio PCM & Multiplication incorrecte $\times$ 32768 & Passage direct float32 normalisé \\
+    Artéfacts aux limites de chunks & Resampling chunk par chunk & Accumulation int16 complète, un seul resampling \\
+    Double TTS & Double appel Cerebras & Audit du flux, suppression appel redondant \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
-\section{Technologies utilisées :}
+\subsection{Résultats}
 
+\todo{WER mesuré sur corpus de test. Comparaison avec/sans dictionnaire phonémique.}
 
-\subsection{HTML5 :}
-..
+%--------------------------------------------------------------
+\section{Module 2 — Moteur de Dialogue (Rasa NLU/Core)}
+%--------------------------------------------------------------
 
-\subsection{CSS3 :}
-..
+\subsection{Rôle}
 
+\todo{Cerveau conversationnel : classification intent, extraction entités,
+gestion du flux de recouvrement.}
 
-\subsection{React JS} 
-ReactJS  \cite{1} est une bibliothèque JavaScript déclarative, efficace et flexible pour la création d'interfaces utilisateur (UI).\\
-Cette framework nous permet de composer des interfaces utilisateur complexes à partir de petits morceaux de code isolés appelés «composants». \\ \\ 
+\subsection{Architecture interne}
 
-\subsection{Node JS}
-..\\
+\todo{Pipeline NLU : DIETClassifier, RegexEntityExtractor.
+Politiques : RulePolicy, AugmentedMemoizationPolicy, TEDPolicy.}
 
-\section{Tâches Réalisées }
-tahki aali 5demthom w t7ot des captures d'ecran
+\subsection{Inventaire des intents}
 
+\begin{table}[H]
+  \centering
+  \caption{Inventaire des intents principaux}
+  \label{tab:intents}
+  \begin{tabularx}{\textwidth}{llX}
+    \toprule
+    \textbf{Intent} & \textbf{Exemple d'utterance} & \textbf{Action déclenchée} \\
+    \midrule
+    affirmer\_paiement   & \og{}Oui je vais payer\fg{}         & action\_log\_payment\_promise \\
+    nier\_dette          & \og{}Je ne dois rien\fg{}            & action\_utter\_dette\_confirmee \\
+    demander\_delai      & \og{}Donnez-moi une semaine\fg{}     & action\_propose\_echeancier \\
+    signaler\_deces      & \og{}Mon mari est décédé\fg{}        & action\_escalade\_humaine \\
+    signaler\_difficulte & \og{}Je suis au chômage\fg{}         & action\_propose\_echeancier\_reduit \\
+    authentifier\_zip    & \og{}Mon code postal c'est 2080\fg{} & action\_authenticate\_zip \\
+    demander\_montant    & \og{}Combien je dois ?\fg{}          & action\_utter\_montant\_du \\
+    hors\_sujet          & \og{}Quel temps fait-il ?\fg{}       & utter\_recentrer \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
+\subsection{Slots critiques}
 
+\begin{table}[H]
+  \centering
+  \caption{Slots Rasa critiques}
+  \label{tab:slots}
+  \begin{tabularx}{\textwidth}{llXl}
+    \toprule
+    \textbf{Slot} & \textbf{Type} & \textbf{Rôle} & \textbf{Défaut} \\
+    \midrule
+    authenticated    & bool  & Verrou — aucune négociation sans auth & False \\
+    call\_logged     & bool  & Évite les doublons CRM                & False \\
+    emotion\_current & text  & Dernière émotion détectée             & neutral \\
+    debtor\_id       & text  & ID EspoCRM du débiteur                & null \\
+    montant\_du      & float & Montant de la dette                   & null \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Flux de dialogue}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig4_m2_dialogue_flow}
+  \caption{Module 2 — Arbre de flux de dialogue}
+  \label{fig:m2_dialogue_flow}
+\end{figure}
+
+\subsection{Résultats NLU}
+
+\todo{Matrice de confusion, F1 par intent, évolution entre runs.}
+
+%--------------------------------------------------------------
+\section{Module 3 — Base de Connaissances RAG}
+%--------------------------------------------------------------
+
+\subsection{Rôle}
+
+\todo{Permettre à l'agent de répondre aux questions sur les politiques bancaires
+sans hardcoder les réponses.}
+
+\subsection{Architecture interne}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig4_m3_rag_pipeline}
+  \caption{Module 3 — Pipeline RAG complet}
+  \label{fig:m3_rag}
+\end{figure}
+
+\todo{KB Service FastAPI port 8001. Fix : \_retry\_collection() pour race condition DuckDB.}
+
+\subsection{Diagramme d'activité — logique de décision RAG}
+
+\todo{%
+  Diagramme d'activité UML montrant le flux décisionnel :
+  intent couvert par Rasa ? $\rightarrow$ sinon requête ChromaDB $\rightarrow$
+  résultat suffisant ? $\rightarrow$ sinon appel Cerebras LLM.
+  Inclure les gardes [score cosinus $>$ seuil] et [confiance NLU $<$ seuil].
+}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig4_m3_activity_rag}
+  \caption{Module 3 — Diagramme d'activité du pipeline RAG}
+  \label{fig:m3_activity_rag}
+\end{figure}
+
+%--------------------------------------------------------------
+\section{Module 4 — Intégration CRM (EspoCRM)}
+%--------------------------------------------------------------
+
+\subsection{Rôle}
+
+\todo{Source de vérité des données débiteur. Authentification, logging, stockage émotions.}
+
+\subsection{Flux d'interaction}
+
+\begin{table}[H]
+  \centering
+  \caption{Module 4 — Interactions Rasa $\leftrightarrow$ EspoCRM}
+  \label{tab:crm_interactions}
+  \begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Action Rasa} & \textbf{Appel EspoCRM} & \textbf{Données échangées} \\
+    \midrule
+    action\_session\_start     & GET /api/v1/Contact?phoneNumber= & Profil débiteur $\rightarrow$ slots \\
+    action\_authenticate\_zip  & GET /api/v1/Contact/\{id\}        & Validation code postal \\
+    action\_authenticate\_dob  & GET /api/v1/Contact/\{id\}        & Validation date naissance \\
+    action\_log\_call\_outcome & POST /api/v1/Call                 & Durée, intent final, résultat \\
+    action\_log\_emotion       & PATCH /api/v1/Call/\{id\}         & Émotion courante \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig4_m4_seq_auth}
+  \caption{Module 4 — Séquence authentification débiteur}
+  \label{fig:m4_seq_auth}
+\end{figure}
+
+%--------------------------------------------------------------
+\section{Module 5 — Reconnaissance Émotionnelle}
+%--------------------------------------------------------------
+
+\subsection{Rôle}
+
+\todo{Analyser le sentiment de chaque utterance pour alimenter les décisions
+d'escalade et les analytics superviseur.}
+
+\subsection{Architecture}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig4_m5_emotion}
+  \caption{Module 5 — Position du module émotion dans le pipeline}
+  \label{fig:m5_emotion}
+\end{figure}
+
+\todo{Lazy singleton, appel asynchrone post-utter\_message. Limites Darija.}
+
+%--------------------------------------------------------------
+\section{Module 6 — Portail de Gouvernance (Django + Next.js)}
+%--------------------------------------------------------------
+
+\subsection{Backend Django}
+
+\subsubsection{Applications Django}
+
+\begin{table}[H]
+  \centering
+  \caption{Applications Django du portail}
+  \label{tab:django_apps}
+  \begin{tabularx}{\textwidth}{lX}
+    \toprule
+    \textbf{Application} & \textbf{Responsabilités} \\
+    \midrule
+    apps.auth          & 2FA email, JWT access + refresh, gestion utilisateurs \\
+    apps.conversations  & Historique appels, transcriptions, timelines émotionnelles \\
+    apps.analytics     & Métriques : distribution intents, trend risque, compliance \\
+    apps.experiments   & Forge NLU : CRUD expériences/runs, métriques, delta \\
+    apps.guardrails    & CRUD guardrails, middleware enforcement, cache 60s \\
+    apps.knowledge\_base & Gestion documents RAG, déclenchement indexation \\
+    apps.campaigns     & Orchestration campagnes d'appels sortants \\
+    apps.regulatory    & Export logs conformité réglementaire \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsubsection{Pipeline d'entraînement Rasa (Forge)}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig4_m6_training_pipeline}
+  \caption{Module 6 — Pipeline d'entraînement Rasa via Forge}
+  \label{fig:m6_training}
+\end{figure}
+
+\subsubsection{Middleware guardrails}
+
+\todo{Interception réponses LLM, cache Redis 60s, fallback français, log audit trail.}
+
+\subsection{Frontend Next.js}
+
+\todo{Design dark éditorial : Syne + DM Mono + Inter.}
+
+\begin{table}[H]
+  \centering
+  \caption{Pages principales du portail de gouvernance}
+  \label{tab:portail_pages}
+  \begin{tabularx}{\textwidth}{lXl}
+    \toprule
+    \textbf{Page} & \textbf{Fonctionnalités clés} & \textbf{Figure} \\
+    \midrule
+    Agent Dashboard    & KPIs temps réel, appels actifs, alertes émotion & Fig.~\ref{fig:screen_dashboard} \\
+    Live Monitoring    & Transcription en direct, émotion, slots Rasa     & Fig.~\ref{fig:screen_monitoring} \\
+    Analytics          & Distribution intents, trend risque, compliance   & Fig.~\ref{fig:screen_analytics} \\
+    Forge — Experiments & Tableau expériences, création run, status        & Fig.~\ref{fig:screen_forge} \\
+    Guardrails         & Liste règles actives, modal création, toggle     & Fig.~\ref{fig:screen_guardrails} \\
+    Knowledge Base     & Upload documents, statut indexation              & Fig.~\ref{fig:screen_kb} \\
+    Campaigns          & Création campagne, liste débiteurs, progression  & Fig.~\ref{fig:screen_campaigns} \\
+    Regulatory Export  & Sélection période, génération export             & Fig.~\ref{fig:screen_regulatory} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\todo{Insérer ici les captures d'écran annotées du portail.}
+
+% Placeholder captures d'écran
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=\textwidth]{figures/screen_dashboard.png}
+  \todo{Capture : Agent Dashboard}
+  \caption{Portail de gouvernance — Agent Dashboard}
+  \label{fig:screen_dashboard}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \todo{Capture : Live Monitoring}
+  \caption{Portail de gouvernance — Live Monitoring}
+  \label{fig:screen_monitoring}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \todo{Capture : Analytics}
+  \caption{Portail de gouvernance — Analytics}
+  \label{fig:screen_analytics}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \todo{Capture : Forge Experiments}
+  \caption{Portail de gouvernance — Forge Experiments}
+  \label{fig:screen_forge}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \todo{Capture : Guardrails}
+  \caption{Portail de gouvernance — Guardrails}
+  \label{fig:screen_guardrails}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \todo{Capture : Knowledge Base}
+  \caption{Portail de gouvernance — Knowledge Base}
+  \label{fig:screen_kb}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \todo{Capture : Campaigns}
+  \caption{Portail de gouvernance — Campaigns}
+  \label{fig:screen_campaigns}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \todo{Capture : Regulatory Export}
+  \caption{Portail de gouvernance — Regulatory Export}
+  \label{fig:screen_regulatory}
+\end{figure}
+
+%--------------------------------------------------------------
+\section{Module 7 — Infrastructure et Déploiement}
+%--------------------------------------------------------------
+
+\subsection{Services et gestion de processus}
+
+\begin{table}[H]
+  \centering
+  \caption{Services et gestionnaires de processus}
+  \label{tab:services_processus}
+  \begin{tabularx}{\textwidth}{lXllX}
+    \toprule
+    \textbf{Service} & \textbf{Process Mgr} & \textbf{Port} & \textbf{Restart} & \textbf{Healthcheck} \\
+    \midrule
+    FreeSWITCH     & systemd   & 5060/8022 & on-failure & fs\_cli -x "status" \\
+    Voice Gateway  & systemd   & 8000      & on-failure & GET /health \\
+    Rasa Server    & Docker    & 5005      & on-failure & GET /status \\
+    Action Server  & Docker    & 5055      & on-failure & GET /health \\
+    KB Service     & Docker    & 8001      & on-failure & GET /health \\
+    Django + Gunicorn & systemd & 8080    & always     & GET /api/v1/health \\
+    Next.js        & pm2       & 3000      & always     & GET / \\
+    PostgreSQL     & systemd   & 5432      & always     & pg\_isready \\
+    Redis          & systemd   & 6379      & always     & redis-cli ping \\
+    EspoCRM        & Apache    & 80        & always     & HTTP 200 \\
+    Ollama         & systemd   & 11434     & always     & GET /api/tags \\
+    Celery Worker  & supervisord & —      & always     & celery inspect ping \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Containerisation Docker}
+
+\todo{docker-compose.yml, Dockerfile.actions, endpoints.yml.}
+
+\subsection{Diagramme de composants — stack Docker}
+
+\todo{%
+  Diagramme de composants UML montrant les 4 conteneurs Docker
+  (Rasa, Action Server, KB Service, Duckling), leurs interfaces exposées,
+  et les dépendances entre eux. Distinct du diagramme de déploiement
+  (Figure~\ref{fig:deployment}) qui montre les nœuds physiques.
+}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig4_m7_docker_components}
+  \caption{Module 7 — Diagramme de composants Docker}
+  \label{fig:m7_docker_components}
+\end{figure}
+
+\subsection{Diagramme d'état — cycle de vie d'un appel}
+
+\todo{%
+  Diagramme d'état UML couvrant tous les états possibles d'un appel :
+  INITIATED $\rightarrow$ RINGING $\rightarrow$ ANSWERED $\rightarrow$
+  AUTHENTICATING $\rightarrow$ AUTHENTICATED $\rightarrow$ NEGOTIATING
+  $\rightarrow$ [CLOSED | ESCALATED | FAILED | NO\_ANSWER].
+  Inclure les transitions gardées (ex. : [3 échecs auth] $\rightarrow$ FAILED).
+}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig4_m7_call_states}
+  \caption{Module 7 — Diagramme d'état du cycle de vie d'un appel}
+  \label{fig:m7_call_states}
+\end{figure}
+
+\subsection{Note sur l'environnement WSL2}
+
+\todo{%
+  Note courte (10 lignes max) : WSL2 mirrored networking, port 8022,
+  ESL\_HOST=127.0.0.1, IP Tailscale non bindable.
+  La configuration cible VPS Ubuntu est identique à une installation Linux standard.
+}
+
+%--------------------------------------------------------------
 \section{Conclusion}
+%--------------------------------------------------------------
+
+\todo{%
+  Synthèse des 7 modules implémentés.
+  Transition : \og{}L'ensemble des modules étant implémentés, le chapitre
+  suivant présente la stratégie de tests et les résultats obtenus.\fg{}
+}

@@ -1,57 +1,357 @@
-\chapter{Contexte du projet}
-\markboth{Chapitre 1 }{1 Contexte du projet} %pour afficher l'entete
-
-
-\setcounter{chapter}{1}
+\chapter{Contexte G\'en\'eral et Cadrage du Projet}
 \minitoc
 
 
-%\end{chapter1}
+%--------------------------------------------------------------
 \section{Introduction}
-Introduction...\\
+%--------------------------------------------------------------
 
+\todo{Introduire le chapitre : contexte, annonce du plan.}
 
-\section{Présentation de l'organisme d'accueil }
-\subsection{Organisme d'accueil : }
-Présentation de l'organisme d'accueil.\\
+%--------------------------------------------------------------
+\section{Présentation de l'organisme d'accueil}
+%--------------------------------------------------------------
 
-%\
-\begin{figure}[h!]
- \centering
-    \includegraphics[width=5cm]{logo.png}
-    \caption{Logo de société}
-    \label{imag1}
+\subsection{Fiche d'identité}
+
+\todo{Création, capital, agences, positionnement marché.}
+
+\begin{table}[H]
+  \centering
+  \caption{Fiche d'identité de la banque}
+  \label{tab:fiche_banque}
+  \begin{tabularx}{0.85\textwidth}{lX}
+    \toprule
+    \textbf{Critère} & \textbf{Information} \\
+    \midrule
+    Raison sociale     & \todo{} \\
+    Date de création   & \todo{} \\
+    Capital            & \todo{} \\
+    Nombre d'agences   & \todo{} \\
+    Effectif           & \todo{} \\
+    Activité principale & \todo{} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Organigramme et positionnement du projet}
+
+\todo{Organigramme général $\rightarrow$ zoom département IT/Digital.
+Positionnement du projet dans la stratégie digitale.}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig1_organigramme}
+  \caption{Organigramme du département IT/Digital}
+  \label{fig:organigramme}
 \end{figure}
 
+%--------------------------------------------------------------
+\section{Étude de l'existant : le processus de recouvrement actuel}
+%--------------------------------------------------------------
 
-\subsection{Domaines d'activités}
-..\\
+\subsection{Description du workflow manuel}
 
+\todo{Identification des dossiers $\rightarrow$ affectation agents $\rightarrow$
+appels sortants $\rightarrow$ saisie CRM $\rightarrow$ reporting.}
 
-\section{Présentation du projet}
-\subsection{Cadre de projet}
-tfasser chnoa sujet.\\
-\subsection{Problématique}
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig1_workflow_existant}
+  \caption{Workflow actuel du processus de recouvrement}
+  \label{fig:workflow_existant}
+\end{figure}
 
-Problématique.\\
+\subsection{Analyse critique}
 
-\subsection{Etude de l’existant}
-..\\
+\todo{%
+  Redaction en prose (2-3 paragraphes) : presenter les chiffres cles du
+  processus actuel -- volume d'appels/jour, taux de contact, cout par
+  appel estime, taux de recouvrement. Ces chiffres motivent ensuite
+  l'analyse SWOT ci-dessous (ne pas les mettre dans un tableau separe,
+  les integrer au texte).
+}
 
-\subsection{Solution proposée}
-..\\
+\begin{table}[H]
+  \centering
+  \caption{Analyse SWOT du processus de recouvrement existant}
+  \label{tab:swot}
+  \begin{tabular}{|p{0.22\textwidth}|p{0.22\textwidth}|p{0.22\textwidth}|p{0.22\textwidth}|}
+    \hline
+    \rowcolor{lightGray}
+    \textbf{Forces} & \textbf{Faiblesses} & \textbf{Opportunités} & \textbf{Menaces} \\
+    \hline
+    \todo{} & \todo{} & \todo{} & \todo{} \\[3cm]
+    \hline
+  \end{tabular}
+\end{table}
 
-\section{Méthodologie de travail et planification}
-\subsection{Définition d'une méthodologie}
-..\\
+\todo{%
+  Paragraphe de synthese (3-4 phrases) qui decoule du SWOT : quelle
+  faiblesse principale justifie le projet ? Faire le lien explicite avec
+  la section suivante (contraintes) -- par exemple si la faiblesse
+  "scalabilite limitee" est identifiee, annoncer qu'elle guide les choix
+  d'architecture qui suivent.
+}
 
-\subsection{Choix de Scrum}
-w ken 5demtou b scrum tahki aalih chwaya.\\
+%--------------------------------------------------------------
+\section{Contraintes du projet}
+%--------------------------------------------------------------
 
+\todo{%
+  Section critique — justifie TOUTES les décisions techniques ultérieures.
+  Le jury doit comprendre pourquoi les solutions cloud standard sont exclues.
+  Rediger un paragraphe d'introduction (pas juste l'annonce ci-dessus) qui
+  pose le contexte reglementaire tunisien avant de presenter le tableau.
+}
 
+\begin{table}[H]
+  \centering
+  \caption{Contraintes du projet et impact architectural}
+  \label{tab:contraintes}
+  \begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Contrainte} & \textbf{Description} & \textbf{Impact architectural} \\
+    \midrule
+    Résidence des données &
+      Loi n°2004-63 : données clients sur serveurs bancaires uniquement &
+      Auto-hébergement intégral \\[0.2cm]
+    Performance temps-réel &
+      Latence bout-en-bout $<$ 2 secondes &
+      VAD Silero, faster-Whisper, Piper TTS \\[0.2cm]
+    Contrainte linguistique &
+      Français bancaire + noms propres tunisiens + code-switching &
+      Dictionnaire phonémique, modèles multilingues \\[0.2cm]
+    Conformité réglementaire &
+      Enregistrement des conversations, audit trail &
+      Portail de gouvernance, logging exhaustif \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
 
+\todo{%
+  Paragraphe de cloture (3-4 phrases) : reprendre la contrainte de
+  residence des donnees et annoncer explicitement qu'elle sera le fil
+  rouge justifiant chaque choix technologique du Chapitre 2.
+}
 
+%--------------------------------------------------------------
+\section{Spécification des besoins}
+%--------------------------------------------------------------
 
+\subsection{Besoins fonctionnels}
 
-\section{Conclusion }
-Conclusion aali 7kit aalih fi chapitre hetha.\\
+\todo{%
+  Lister tous les besoins fonctionnels du système.
+  Un besoin fonctionnel = ce que le système DOIT FAIRE.
+}
+
+\begin{table}[H]
+  \centering
+  \caption{Besoins fonctionnels}
+  \label{tab:besoins_fonctionnels}
+  \begin{tabularx}{\textwidth}{llX}
+    \toprule
+    \textbf{ID} & \textbf{Priorité} & \textbf{Description} \\
+    \midrule
+    BF01 & Must   & Le système doit émettre des appels sortants automatiques vers les débiteurs \\
+    BF02 & Must   & Le système doit transcrire la parole du débiteur en texte (STT) \\
+    BF03 & Must   & Le système doit classifier l'intention du débiteur (NLU) \\
+    BF04 & Must   & Le système doit authentifier le débiteur (code postal ou date de naissance) \\
+    BF05 & Must   & Le système doit consulter le dossier du débiteur dans le CRM \\
+    BF06 & Must   & Le système doit synthétiser une réponse vocale (TTS) \\
+    BF07 & Must   & Le système doit journaliser chaque appel dans le CRM \\
+    BF08 & Must   & Le système doit escalader vers un agent humain sur détresse émotionnelle \\
+    BF09 & Should & Le système doit répondre aux questions sur les politiques bancaires (RAG) \\
+    BF10 & Should & Le système doit détecter l'émotion du débiteur en temps réel \\
+    BF11 & Should & Le portail doit afficher les transcriptions et métriques en temps réel \\
+    BF12 & Should & Le portail doit permettre la gestion des guardrails IA \\
+    BF13 & Should & Le portail doit permettre l'entraînement et l'évaluation du modèle NLU \\
+    BF14 & Could  & Le portail doit générer un export réglementaire des logs \\
+    BF15 & Could  & Le portail doit orchestrer des campagnes d'appels sortants \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\todo{%
+  Court paragraphe de transition (2 phrases) entre les deux tableaux :
+  ex. "Ces besoins fonctionnels definissent le perimetre du systeme. Le
+  tableau suivant precise les contraintes de qualite qui conditionnent
+  leur mise en oeuvre."
+}
+
+\subsection{Besoins non-fonctionnels}
+
+\todo{%
+  Besoins non-fonctionnels = contraintes de qualité sur le système.
+  Performance, sécurité, disponibilité, maintenabilité, conformité.
+}
+
+\begin{table}[H]
+  \centering
+  \caption{Besoins non-fonctionnels}
+  \label{tab:besoins_non_fonctionnels}
+  \begin{tabularx}{\textwidth}{llX}
+    \toprule
+    \textbf{ID} & \textbf{Catégorie} & \textbf{Description} \\
+    \midrule
+    BNF01 & Performance   & Latence bout-en-bout $<$ 2 secondes (fin parole $\rightarrow$ début réponse TTS) \\
+    BNF02 & Performance   & \ac{WER} \ac{STT} $<$ 15\% sur corpus français téléphonie \\
+    BNF03 & Performance   & F1-score \ac{NLU} $>$ 85\% sur l'ensemble des intents \\
+    BNF04 & Conformité    & Toutes les données débiteurs doivent rester sur les serveurs de la banque (loi n°2004-63) \\
+    BNF05 & Sécurité      & Accès au portail protégé par authentification 2FA + \ac{JWT} \\
+    BNF06 & Sécurité      & Aucune donnée personnelle (\ac{PII}) transmise aux services externes \\
+    BNF07 & Disponibilité & Le système vocal doit être disponible 24h/24, 7j/7 \\
+    BNF08 & Maintenabilité & Le modèle NLU doit pouvoir être ré-entraîné sans interruption du service \\
+    BNF09 & Scalabilité   & L'architecture doit supporter l'ajout de canaux d'appels supplémentaires \\
+    BNF10 & Auditabilité  & Toutes les interactions doivent être tracées avec horodatage et stockées \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+%--------------------------------------------------------------
+\section{Solution proposée}
+%--------------------------------------------------------------
+
+\subsection{Description fonctionnelle}
+
+\todo{Ce que le système fait, sans nommer les technologies.
+Deux axes : Agent vocal autonome + Portail de gouvernance.}
+
+\begin{figure}[H]
+  \centering
+  \input{tikz/fig1_solution_fonctionnelle}
+  \caption{Vue fonctionnelle de la solution proposée}
+  \label{fig:solution_fonctionnelle}
+\end{figure}
+
+\subsection{Critères de succès mesurables}
+
+\begin{table}[H]
+  \centering
+  \caption{Critères de succès du projet}
+  \label{tab:criteres_succes}
+  \begin{tabularx}{0.85\textwidth}{lXl}
+    \toprule
+    \textbf{Critère} & \textbf{Description} & \textbf{Cible} \\
+    \midrule
+    WER \ac{STT}  & Taux d'erreur par mot (corpus français téléphonie) & $< 15\%$ \\
+    F1 \ac{NLU}   & F1-score moyen sur tous les intents & $> 85\%$ \\
+    Latence E2E   & Délai fin parole $\rightarrow$ début réponse \ac{TTS} & $< 2$ s \\
+    Couverture UC & Use cases implémentés / planifiés & $100\%$ \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+%--------------------------------------------------------------
+\section{Méthodologie de gestion de projet}
+%--------------------------------------------------------------
+
+\subsection{Méthode Scrum adaptée}
+
+\todo{Justification : projet évolutif, besoins émergents, validation incrémentale.
+Définition des rôles.}
+
+\subsection{Product Backlog — User Stories}
+
+\todo{%
+  Lister les user stories par épic. Format : "En tant que [acteur],
+  je veux [fonctionnalité] afin de [bénéfice]."
+  Priorité MoSCoW : Must / Should / Could / Won't.
+}
+
+\begin{longtable}{lllp{6cm}l}
+  \caption{Product Backlog — User Stories} \label{tab:backlog} \\
+  \toprule
+  \textbf{ID} & \textbf{Sprint} & \textbf{Épic} & \textbf{User Story} & \textbf{Priorité} \\
+  \midrule
+  \endfirsthead
+  \multicolumn{5}{c}{\textit{(Suite du Tableau~\ref{tab:backlog})}} \\
+  \toprule
+  \textbf{ID} & \textbf{Sprint} & \textbf{Épic} & \textbf{User Story} & \textbf{Priorité} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+  US01 & S1 & Téléphonie  & En tant que système, je veux émettre un appel SIP sortant afin de contacter un débiteur & Must \\
+  US02 & S1 & Téléphonie  & En tant que système, je veux streamer l'audio PCM via WebSocket afin de le traiter en temps réel & Must \\
+  US03 & S1 & STT         & En tant que système, je veux détecter l'activité vocale (VAD) afin de déclencher la transcription au bon moment & Must \\
+  US04 & S1 & STT         & En tant que système, je veux transcrire la parole en français afin de l'envoyer au moteur NLU & Must \\
+  US05 & S2 & NLU         & En tant que système, je veux classifier l'intent du débiteur afin de déclencher l'action appropriée & Must \\
+  US06 & S2 & NLU         & En tant que système, je veux authentifier le débiteur par code postal afin de sécuriser la conversation & Must \\
+  US07 & S2 & TTS         & En tant que système, je veux synthétiser une réponse vocale afin de la jouer au débiteur & Must \\
+  US08 & S3 & RAG         & En tant que système, je veux rechercher dans la base de connaissances afin de répondre aux questions complexes & Should \\
+  US09 & S3 & CRM         & En tant que système, je veux journaliser l'appel dans EspoCRM afin de garder une trace complète & Must \\
+  US10 & S3 & Émotion     & En tant que superviseur, je veux voir l'émotion du débiteur en temps réel afin d'anticiper une escalade & Should \\
+  US11 & S4 & Portail     & En tant que superviseur, je veux consulter les KPIs des appels afin de piloter la performance & Should \\
+  US12 & S4 & Portail     & En tant qu'admin, je veux gérer les guardrails IA afin de contrôler les réponses du LLM & Should \\
+  US13 & S4 & Portail     & En tant qu'admin, je veux entraîner le modèle NLU depuis le portail afin d'améliorer les performances & Should \\
+  US14 & S5 & Conformité  & En tant qu'admin, je veux exporter les logs réglementaires afin de répondre aux audits bancaires & Could \\
+  US15 & S5 & Campagnes   & En tant qu'admin, je veux créer une campagne d'appels afin d'automatiser le recouvrement en masse & Could \\
+\end{longtable}
+
+\subsection{Planification — Diagramme de Gantt}
+
+\todo{%
+  Diagramme de Gantt obligatoire ESPRIT. À placer sur une page complète.
+  Couvrir les sprints : Ch.1 infrastructure SIP/STT, Ch.2 NLU/Rasa,
+  Ch.3 RAG+CRM, Ch.4 portail Django/Next.js, Ch.5 tests et intégration.
+  Outil recommandé : pgfgantt (LaTeX) ou image exportée depuis GanttProject/Excel.
+}
+
+% -- Option A : pgfgantt (décommenter et remplir) --
+% \usepackage{pgfgantt} % ajouter dans main.tex preamble
+% \begin{figure}[H]
+%   \centering
+%   \begin{ganttchart}[hgrid, vgrid, x unit=0.7cm, y unit chart=0.6cm]{1}{20}
+%     \gantttitle{Semaines}{20} \\
+%     \gantttitlelist{1,...,20}{1} \\
+%     \ganttbar{Sprint 1 — Infra SIP/STT}{1}{3} \\
+%     \ganttbar{Sprint 2 — NLU/Rasa}{4}{7} \\
+%     \ganttbar{Sprint 3 — RAG + CRM}{8}{11} \\
+%     \ganttbar{Sprint 4 — Portail}{12}{16} \\
+%     \ganttbar{Sprint 5 — Tests}{17}{19} \\
+%     \ganttbar{Rédaction rapport}{14}{20}
+%   \end{ganttchart}
+%   \caption{Diagramme de Gantt — Planification du projet}
+%   \label{fig:gantt}
+% \end{figure}
+
+% -- Option B : image exportée --
+\begin{figure}[H]
+  \centering
+  % \includegraphics[width=\textwidth]{figures/gantt.png}
+  \todo{Insérer ici le diagramme de Gantt (image ou pgfgantt)}
+  \caption{Diagramme de Gantt — Planification du projet}
+  \label{fig:gantt}
+\end{figure}
+
+\subsection{Environnement de développement}
+
+\begin{table}[H]
+  \centering
+  \caption{Environnement de développement}
+  \label{tab:env_dev}
+  \begin{tabularx}{0.85\textwidth}{lX}
+    \toprule
+    \textbf{Composant} & \textbf{Description} \\
+    \midrule
+    Machine         & \todo{CPU, RAM, GPU} \\
+    Système hôte    & Windows 11 + \ac{WSL}2 Ubuntu 22.04 \\
+    Conteneurisation & Docker Desktop \\
+    IDE             & VS Code + extensions \\
+    Versioning      & Git / GitHub \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+%--------------------------------------------------------------
+\section{Conclusion}
+%--------------------------------------------------------------
+
+\todo{%
+  Résumer les contraintes et la solution proposée.
+  Transition : \og{}Ces contraintes étant posées, le chapitre suivant
+  présente l'état de l'art des technologies disponibles et justifie les
+  choix effectués pour chaque couche du système.\fg{}
+}
